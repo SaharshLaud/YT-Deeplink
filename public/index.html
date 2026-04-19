@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>YT Deep Link — Open YouTube in the App</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:   #ff0000;
+      --bg:    #0f0f0f;
+      --card:  #1a1a1a;
+      --border:#2a2a2a;
+      --text:  #f1f1f1;
+      --muted: #aaa;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 36px;
+    }
+    .logo svg { width: 40px; height: 40px; }
+    .logo span { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 28px; line-height: 1.5; }
+
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+
+    input[type="text"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 15px;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input[type="text"]:focus { border-color: var(--red); }
+
+    .btn {
+      margin-top: 16px;
+      width: 100%;
+      background: var(--red);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .88; }
+    .btn:active { opacity: .75; }
+
+    .divider {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      margin: 24px 0 18px;
+      position: relative;
+    }
+    .divider::before, .divider::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 42%;
+      height: 1px;
+      background: var(--border);
+    }
+    .divider::before { left: 0; }
+    .divider::after  { right: 0; }
+
+    .link-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+      word-break: break-all;
+    }
+    .link-box .link-url { color: var(--red); font-weight: 500; }
+
+    .how {
+      margin-top: 40px;
+      width: 100%;
+      max-width: 480px;
+    }
+    .how h2 { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: .05em; }
+    .steps { display: flex; flex-direction: column; gap: 10px; }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .step-num {
+      background: var(--red);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 50%;
+      min-width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+    .step p { font-size: 14px; line-height: 1.5; color: var(--muted); }
+    .step p strong { color: var(--text); }
+
+    .error-msg {
+      background: #2a0a0a;
+      border: 1px solid #5a1a1a;
+      color: #f87171;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .error-msg.show { display: block; }
+
+    footer { margin-top: 48px; color: var(--muted); font-size: 12px; text-align: center; }
+    footer a { color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <div class="logo">
+    <!-- YouTube icon -->
+    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="9" fill="#ff0000"/>
+      <path d="M30.5 15.3a2.5 2.5 0 0 0-1.76-1.77C27.1 13 20 13 20 13s-7.1 0-8.74.53a2.5 2.5 0 0 0-1.76 1.77C9 16.94 9 20 9 20s0 3.06.5 4.7a2.5 2.5 0 0 0 1.76 1.77C12.9 27 20 27 20 27s7.1 0 8.74-.53a2.5 2.5 0 0 0 1.76-1.77C31 23.06 31 20 31 20s0-3.06-.5-4.7z" fill="white"/>
+      <path d="M17.5 23l6-3-6-3v6z" fill="#ff0000"/>
+    </svg>
+    <span>YT Deep Link</span>
+  </div>
+
+  <div class="card">
+    <h1>Open YouTube in the app</h1>
+    <p class="subtitle">Paste any YouTube link below. Share the generated link on your Instagram story — your audience goes straight into the YouTube app, not a browser.</p>
+
+    <div class="error-msg" id="error-msg">Please enter a valid YouTube link.</div>
+
+    <label for="yt-input">YouTube URL</label>
+    <input type="text" id="yt-input" placeholder="https://youtu.be/dQw4w9WgXcQ" autocomplete="off" spellcheck="false"/>
+    <button class="btn" onclick="generate()">Generate deep link</button>
+
+    <div id="result" style="display:none">
+      <div class="divider">Your shareable link</div>
+      <div class="link-box">
+        Share this on your story:<br/>
+        <span class="link-url" id="output-url"></span>
+      </div>
+      <button class="btn" style="margin-top:12px;background:#1a1a1a;border:1px solid #333;" onclick="copyLink()">Copy link</button>
+    </div>
+  </div>
+
+  <div class="how">
+    <h2>How to use</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <p><strong>Paste your YouTube video URL</strong> above and click Generate.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <p><strong>Copy the link</strong> and paste it into your Instagram story as a link sticker.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <p><strong>When your followers tap it</strong>, they're taken straight into the YouTube app — no browser, no delay.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Free &amp; open source · No login · No ads ·
+    <a href="https://github.com/your-username/yt-deeplink" target="_blank">GitHub</a>
+  </footer>
+
+  <script>
+    // Check for error param on load
+    const params = new URLSearchParams(location.search);
+    if (params.get("error") === "invalid") {
+      document.getElementById("error-msg").classList.add("show");
+    }
+
+    function extractVideoId(url) {
+      try {
+        const u = new URL(url.trim());
+        if (u.hostname === "youtu.be") return u.pathname.slice(1).split("?")[0];
+        if (u.searchParams.get("v")) return u.searchParams.get("v");
+        const m = u.pathname.match(/\/(shorts|embed|live|v)\/([a-zA-Z0-9_-]{11})/);
+        if (m) return m[2];
+      } catch {}
+      return null;
+    }
+
+    function generate() {
+      const raw = document.getElementById("yt-input").value.trim();
+      const err = document.getElementById("error-msg");
+      const result = document.getElementById("result");
+
+      const id = extractVideoId(raw);
+      if (!id) {
+        err.classList.add("show");
+        result.style.display = "none";
+        return;
+      }
+
+      err.classList.remove("show");
+      const link = `${location.origin}/go?v=${id}`;
+      document.getElementById("output-url").textContent = link;
+      result.style.display = "block";
+    }
+
+    function copyLink() {
+      const url = document.getElementById("output-url").textContent;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.querySelector(".btn:last-child");
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = "Copy link", 2000);
+      });
+    }
+
+    document.getElementById("yt-input").addEventListener("keydown", e => {
+      if (e.key === "Enter") generate();
+    });
+  </script>
+</body>
+</html>
